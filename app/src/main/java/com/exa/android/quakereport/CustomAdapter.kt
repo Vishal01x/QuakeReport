@@ -13,7 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CustomAdapter(context: Context, val resource: Int, val customArray: Array<CustomText>):
+class CustomAdapter(context: Context, val resource: Int, val customArray: ArrayList<CustomText>):
          ArrayAdapter<CustomText>(context, resource,customArray){
 
          private val locator = " of "  // used to split place and offset, before of and after of

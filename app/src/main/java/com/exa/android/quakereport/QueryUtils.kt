@@ -5,6 +5,7 @@ import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.PackageManagerCompat.LOG_TAG
 import kotlinx.coroutines.CoroutineScope
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -21,27 +22,34 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.Charset
 
- private val TAG = "Errorr!"
+private val TAG = "Errorr!"
+
 object QueryUtils {
 
 
-    suspend fun fetchFromEarthQuake(urlRequest: String): ArrayList<CustomText>? {
-        return withContext(Dispatchers.IO) {
-            val url = createUrl(urlRequest)
-            var jsResponse: String? = null
+    fun fetchFromEarthQuake(urlRequest: String): ArrayList<CustomText>? {
+//        return withContext(Dispatchers.IO) {
+      // used for testing that progress bar is working properly
+        /*try{
+            Thread.sleep(5000)
+        }catch (e : InterruptedException){
+            e.stackTrace
+        }*/
+        val url = createUrl(urlRequest)
+        var jsResponse: String? = null
 
-            try {
-                jsResponse = url?.let { makeHttpRequest(it) }
-            } catch (e: IOException) {
-                Log.e(TAG, "Error making HTTP request", e)
-            }
-
-            jsResponse?.let { extractEarthquakes(it) }
+        try {
+            jsResponse = url?.let { makeHttpRequest(it) }
+        } catch (e: IOException) {
+            Log.e(TAG, "Error making HTTP request", e)
         }
+
+        return jsResponse?.let { extractEarthquakes(it) }
+
     }
 
 
-    fun createUrl(stringurl : String) : URL? {
+    fun createUrl(stringurl: String): URL? {
         var url: URL? = null // Initialize with null
 
         try {
@@ -53,31 +61,31 @@ object QueryUtils {
         return url
     }
 
-    private fun makeHttpRequest(url : URL):String?{
-        var jsresponse : String ? = null
-        if(url == null)return null
-        var urlconnection : HttpURLConnection? = null
-        var inputstream : InputStream ? = null
-        try{
+    private fun makeHttpRequest(url: URL): String? {
+        var jsresponse: String? = null
+        if (url == null) return null
+        var urlconnection: HttpURLConnection? = null
+        var inputstream: InputStream? = null
+        try {
             urlconnection = url.openConnection() as HttpURLConnection
             urlconnection.readTimeout = 1000
             urlconnection.connectTimeout = 1500
             urlconnection.requestMethod = "GET"
             urlconnection.content
 
-            if(urlconnection.responseCode == 200){
+            if (urlconnection.responseCode == 200) {
                 inputstream = urlconnection.inputStream
                 jsresponse = readFromStream(inputstream)
-            }else{
-                Log.e(TAG,"errro message"+urlconnection.responseCode)
+            } else {
+                Log.e(TAG, "errro message" + urlconnection.responseCode)
             }
-        }catch (e : IOException){
+        } catch (e: IOException) {
             Log.e(TAG, "problem in recieving eathquke json object")
-        }finally {
-            if(urlconnection != null){
+        } finally {
+            if (urlconnection != null) {
                 urlconnection.disconnect()
             }
-            if(inputstream != null){
+            if (inputstream != null) {
                 inputstream.close()
             }
         }
@@ -85,31 +93,31 @@ object QueryUtils {
     }
 
 
-/**
+    /**
      * Return a list of [Earthquake] objects that has been built up from
      * parsing a JSON response.
      */
 
-private fun readFromStream(inputStream: InputStream): String {
-    val output = StringBuilder() // Initialize StringBuilder
+    private fun readFromStream(inputStream: InputStream): String {
+        val output = StringBuilder() // Initialize StringBuilder
 
-    if(inputStream != null) {
-        val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName("UTF-8")))
-        var line = reader.readLine()
+        if (inputStream != null) {
+            val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName("UTF-8")))
+            var line = reader.readLine()
 
-        while(line != null) {
-            output.append(line)
-            line = reader.readLine() // Read the next line
+            while (line != null) {
+                output.append(line)
+                line = reader.readLine() // Read the next line
+            }
         }
+
+        return output.toString()
     }
 
-    return output.toString()
-}
 
+    fun extractEarthquakes(earthJson: String): ArrayList<CustomText>? {
 
-    fun extractEarthquakes(earthJson : String): ArrayList<CustomText>? {
-
-        if(TextUtils.isEmpty(earthJson))return null
+        if (TextUtils.isEmpty(earthJson)) return null
 
         // Create an empty ArrayList that we can start adding earthquakes to
         val earthquakes = ArrayList<CustomText>()
@@ -125,8 +133,8 @@ private fun readFromStream(inputStream: InputStream): String {
             // extracting an array from json bec we get '['
             val earthArray = root.getJSONArray("features")
 
-            var i =0
-            while(i<earthArray.length()){
+            var i = 0
+            while (i < earthArray.length()) {
                 // extracting obj at each index
                 val curEarth = earthArray.optJSONObject(i++)
                 val properties = curEarth.optJSONObject("properties")
@@ -135,7 +143,7 @@ private fun readFromStream(inputStream: InputStream): String {
                 val time = properties.getLong("time")
                 val url = properties.getString("url")
 
-                earthquakes.add(CustomText(magnitude, place,time,url))
+                earthquakes.add(CustomText(magnitude, place, time, url))
             }
 
         } catch (e: JSONException) {
